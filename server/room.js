@@ -1,4 +1,4 @@
-const { dealCards } = require('./data');
+const { dealCards, CHARACTER_STATS } = require('./data');
 
 class GameRoom {
   constructor(id, player1Id, player2Id) {
@@ -63,12 +63,32 @@ class GameRoom {
 
     // If player already has a living field character and this is a character card,
     // it's a swap (only allowed when winning RPS)
-    if (player.field && card.category === 'character') {
+    if (player.field && player.field.currentHp > 0 && (card.category === 'character' || card.category === 'dual')) {
       return { success: false, error: 'Field character still alive, use swap action' };
+    }
+
+    // If no field character, must deploy a character or dual card
+    if (!player.field && card.category !== 'character' && card.category !== 'dual') {
+      return { success: false, error: 'Must deploy a character card first' };
     }
 
     player.hand.splice(cardIndex, 1);
     this.currentRound.deployments[playerId] = card;
+
+    // Create field character immediately for character/dual cards
+    if (card.category === 'character' || card.category === 'dual') {
+      const stats = CHARACTER_STATS[card.type];
+      player.field = {
+        id: card.id,
+        type: card.type,
+        name: stats.name,
+        maxHp: stats.hp,
+        currentHp: stats.hp,
+        atk: stats.atk,
+        skill: stats.skill,
+        reviveUsed: false,
+      };
+    }
 
     return { success: true, card };
   }
