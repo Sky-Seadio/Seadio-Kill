@@ -81,6 +81,10 @@ class SocketManager {
     this.emit('deploy_card', { cardId });
   }
 
+  skipDeploy() {
+    this.emit('skip_deploy', {});
+  }
+
   rpsChoice(choice) {
     this.emit('rps_choice', { choice });
   }

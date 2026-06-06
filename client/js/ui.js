@@ -291,11 +291,32 @@ class UIRenderer {
     this.elements.deckModal.classList.add('hidden');
   }
 
+  // === DEPLOY SKIP ===
+  showDeploySkip(show) {
+    // Create skip button if not exists
+    let skipBtn = document.getElementById('btn-skip-deploy');
+    if (!skipBtn) {
+      skipBtn = document.createElement('button');
+      skipBtn.id = 'btn-skip-deploy';
+      skipBtn.className = 'btn btn-small';
+      skipBtn.textContent = '⏭️ 跳过部署';
+      skipBtn.style.marginTop = '10px';
+      document.querySelector('.battle-area').appendChild(skipBtn);
+    }
+    skipBtn.classList.toggle('hidden', !show);
+  }
+
+  hideDeploySkip() {
+    const skipBtn = document.getElementById('btn-skip-deploy');
+    if (skipBtn) skipBtn.classList.add('hidden');
+  }
+
   // === HIDE ALL INTERACTIVE SECTIONS ===
   hideAllSections() {
     this.showRPS(false);
     this.showActions(false);
     this.hideReviveTarget();
+    this.hideDeploySkip();
   }
 }
 

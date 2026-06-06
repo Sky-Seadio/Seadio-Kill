@@ -128,9 +128,44 @@ io.on('connection', (socket) => {
     // Notify player of successful deploy
     socket.emit('deploy_success', { cardId });
 
+    // Check if both players have deployed (or skipped)
+    const bothDeployed = room.playerIds.every(pid =>
+      room.currentRound.deployments[pid] !== undefined
+    );
+
+    if (bothDeployed) {
+      // Reveal phase
+      room.phase = 'reveal';
+      const reveals = room.reveal();
+
+      for (const pid of room.playerIds) {
+        emitToPlayer(pid, 'cards_revealed', {
+          yourCard: reveals[pid],
+          opponentCard: reveals[room.getOpponentId(pid)],
+        });
+      }
+
+      // Move to RPS phase
+      room.phase = 'rps';
+      emitToRoom(room, 'rps_start', { message: '石头剪刀布！' });
+    }
+  });
+
+  // === SKIP DEPLOY ===
+  socket.on('skip_deploy', () => {
+    const room = matchmaker.getRoom(socket.id);
+    if (!room || room.phase !== 'deploy') {
+      socket.emit('error_msg', { message: 'Cannot skip now' });
+      return;
+    }
+
+    // Mark as deployed with null (skip)
+    room.currentRound.deployments[socket.id] = null;
+    socket.emit('deploy_success', { cardId: null });
+
     // Check if both players have deployed
     const bothDeployed = room.playerIds.every(pid =>
-      room.currentRound.deployments[pid]
+      room.currentRound.deployments[pid] !== undefined
     );
 
     if (bothDeployed) {

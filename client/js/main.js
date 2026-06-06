@@ -92,19 +92,39 @@
     ui.hideAllSections();
     ui.clearCardSelection();
     ui.addLog(`--- 第 ${data.round} 回合 ---`, true);
-    ui.addLog('请选择一张牌暗置到场上。');
-    ui.renderOpponentField(null); // Reset opponent field display
-    ui.renderHand(gameState.myHand, onHandCardClick);
+
+    // Check if field character is alive
+    if (gameState.myField && gameState.myField.currentHp > 0) {
+      // Field character alive — can deploy a skill card or skip
+      const hasSkillCards = gameState.myHand.some(c => c.skillCard);
+      if (hasSkillCards) {
+        ui.addLog('场上角色存活。你可以出一张技能牌，或跳过部署。');
+      } else {
+        ui.addLog('场上角色存活，没有可用的技能牌。等待对手部署...');
+      }
+      ui.showDeploySkip(hasSkillCards);
+      ui.renderHand(gameState.myHand, onDeployCardClick);
+    } else {
+      // No field character — must deploy one
+      ui.addLog('请从手牌中选择一张角色牌部署到场上。');
+      ui.renderHand(gameState.myHand, onDeployCardClick);
+    }
   });
 
-  // === DEPLOY ===
-  function onHandCardClick(card) {
+  // === DEPLOY (when field character is alive) ===
+  function onDeployCardClick(card) {
     if (gameState.phase !== 'deploy') return;
 
-    // If player has no field character, must deploy a character/dual card
-    if (!gameState.myField) {
+    if (gameState.myField && gameState.myField.currentHp > 0) {
+      // Field alive: only allow skill cards
+      if (!card.skillCard) {
+        ui.addLog('场上角色存活，只能出技能牌或跳过。');
+        return;
+      }
+    } else {
+      // No field: only allow character/dual cards
       if (card.category !== 'character' && card.category !== 'dual') {
-        ui.addLog('你还没有场上角色，请先部署一张角色牌。');
+        ui.addLog('请先部署一张角色牌。');
         return;
       }
     }
@@ -114,7 +134,22 @@
     socketManager.deployCard(card.id);
   }
 
+  // Skip deploy button
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'btn-skip-deploy') {
+      socketManager.skipDeploy();
+      ui.addLog('你跳过了部署。');
+      ui.hideDeploySkip();
+    }
+  });
+
   socketManager.on('deploy_success', (data) => {
+    // Handle skip (cardId is null)
+    if (!data.cardId) {
+      ui.hideDeploySkip();
+      return;
+    }
+
     const card = gameState.revealedCard;
     if (!card) return;
 
@@ -123,8 +158,10 @@
       ui.renderMyField(gameState.myField);
     }
     gameState.removeFromHand(card.id);
-    ui.renderHand(gameState.myHand, onHandCardClick);
+    ui.renderHand(gameState.myHand, onDeployCardClick);
     ui.addLog(`你暗置了一张牌。`);
+    ui.hideDeploySkip();
+    ui.hideDeploySkip();
     ui.clearCardSelection();
   });
 
