@@ -335,9 +335,6 @@ io.on('connection', (socket) => {
       player.hand = player.hand.filter(c => c.id !== cardId);
       player.field = logic.createFieldCharacter(newCard);
 
-      // If new character is seer, activate dodge
-      logic.processSeerDeploy(player.field, player);
-
       emitToRoom(room, 'action_result', {
         type: 'swap',
         playerId: socket.id,

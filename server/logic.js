@@ -126,15 +126,6 @@ function processWitchPoison(targetField, targetState) {
 }
 
 /**
- * Process seer's passive dodge activation
- */
-function processSeerDeploy(seerField, playerState) {
-  if (seerField.skill === 'dodge') {
-    playerState.dodgeActive = true;
-  }
-}
-
-/**
  * Process guardian shield skill card usage
  */
 function processShieldCard(playerState) {
@@ -198,7 +189,6 @@ module.exports = {
   processHunterDeath,
   processWitchDeath,
   processWitchPoison,
-  processSeerDeploy,
   processShieldCard,
   processRevealCard,
   processReviveAllyCard,

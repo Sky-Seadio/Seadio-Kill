@@ -184,17 +184,26 @@
     if (data.opponentCard) {
       ui.addLog(`对手暗置了：${data.opponentCard.name}`);
 
-      // If opponent deployed a character, update their field
-      if (data.opponentCard.category === 'character' || data.opponentCard.category === 'dual') {
+      // Only update opponent field if they deployed a character card
+      // AND their field was empty (dual cards used as skill don't create field chars)
+      const hasExistingField = gameState.opponentField && gameState.opponentField.currentHp > 0;
+      const isCharacterDeploy = data.opponentCard.category === 'character';
+      const isDualAsCharacter = data.opponentCard.category === 'dual' && !hasExistingField;
+
+      if (isCharacterDeploy || isDualAsCharacter) {
         const stats = CHARACTER_STATS[data.opponentCard.type];
-        gameState.opponentField = {
-          ...data.opponentCard,
-          maxHp: stats.hp,
-          currentHp: stats.hp,
-          atk: stats.atk,
-        };
-        ui.renderOpponentField(gameState.opponentField);
+        if (stats) {
+          gameState.opponentField = {
+            ...data.opponentCard,
+            maxHp: stats.hp,
+            currentHp: stats.hp,
+            atk: stats.atk,
+          };
+          ui.renderOpponentField(gameState.opponentField);
+        }
       }
+      // If opponent deployed a dual card as skill (field already exists),
+      // don't update their field — just log it
     } else {
       ui.addLog('对手跳过了部署。');
     }
@@ -331,9 +340,11 @@
   function renderSwapCardSelection(cards) {
     ui.elements.handCards.innerHTML = '';
     cards.forEach(card => {
+      const stats = CHARACTER_STATS[card.type];
+      if (!stats) return; // Skip pure skill cards (e.g. seer)
+
       const el = document.createElement('div');
       el.className = `hand-card ${card.category} selected`;
-      const stats = CHARACTER_STATS[card.type];
       el.innerHTML = `
         <span class="card-name">${card.name}</span>
         <div class="card-stats">
