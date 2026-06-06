@@ -159,6 +159,57 @@ class Matchmaker {
     this.queue = []; // array of socket ids waiting
     this.rooms = new Map(); // roomId -> GameRoom
     this.playerRoomMap = new Map(); // playerId -> roomId
+    this.waitingRooms = new Map(); // roomCode -> { creatorId, roomId }
+  }
+
+  /**
+   * Create a private room, returns room code
+   */
+  createRoom(creatorId) {
+    if (this.playerRoomMap.has(creatorId)) return null;
+
+    // Generate a 6-character room code
+    const roomCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const roomId = `room_${Date.now()}_${roomCode}`;
+
+    this.waitingRooms.set(roomCode, { creatorId, roomId });
+    this.playerRoomMap.set(creatorId, roomId);
+
+    return { roomCode, roomId };
+  }
+
+  /**
+   * Join an existing room by code
+   */
+  joinRoom(playerId, roomCode) {
+    if (this.playerRoomMap.has(playerId)) return null;
+
+    const waiting = this.waitingRooms.get(roomCode.toUpperCase());
+    if (!waiting) return null;
+    if (waiting.creatorId === playerId) return null;
+
+    const { creatorId, roomId } = waiting;
+    const room = new GameRoom(roomId, creatorId, playerId);
+
+    this.rooms.set(roomId, room);
+    this.playerRoomMap.set(playerId, roomId);
+    this.waitingRooms.delete(roomCode.toUpperCase());
+
+    return { room, player1: creatorId, player2: playerId };
+  }
+
+  /**
+   * Cancel a created room
+   */
+  cancelRoom(creatorId) {
+    for (const [code, waiting] of this.waitingRooms.entries()) {
+      if (waiting.creatorId === creatorId) {
+        this.waitingRooms.delete(code);
+        this.playerRoomMap.delete(creatorId);
+        return code;
+      }
+    }
+    return null;
   }
 
   /**

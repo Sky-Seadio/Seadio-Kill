@@ -28,6 +28,7 @@ class SocketManager {
       'your_turn', 'opponent_turn', 'opponent_rps_ready',
       'action_result', 'death_skill',
       'select_revive_target',
+      'room_created', 'room_cancelled', 'room_joined',
       'game_over', 'error_msg',
     ];
 
@@ -62,6 +63,18 @@ class SocketManager {
 
   joinQueue() {
     this.emit('join_queue', {});
+  }
+
+  createRoom() {
+    this.emit('create_room', {});
+  }
+
+  joinRoom(roomCode) {
+    this.emit('join_room', { roomCode });
+  }
+
+  cancelRoom() {
+    this.emit('cancel_room', {});
   }
 
   deployCard(cardId) {

@@ -32,6 +32,34 @@ function emitToPlayer(playerId, event, data) {
   if (s) s.emit(event, data);
 }
 
+/**
+ * Start a game between two players
+ */
+function startGame(room, player1, player2) {
+  const s1 = getPlayerSocket(player1);
+  const s2 = getPlayerSocket(player2);
+  if (s1) s1.join(room.id);
+  if (s2) s2.join(room.id);
+
+  // Send game start
+  for (const pid of room.playerIds) {
+    emitToPlayer(pid, 'game_start', {
+      roomId: room.id,
+      yourHand: room.players[pid].hand.map(c => ({
+        id: c.id, type: c.type, category: c.category,
+        name: c.name, hp: c.hp, atk: c.atk,
+        skill: c.skill, skillCard: c.skillCard,
+      })),
+      opponentHandCount: room.getOpponent(pid).hand.length,
+    });
+  }
+
+  room.round = 1;
+  room.phase = 'deploy';
+  emitToRoom(room, 'room_joined', { roomId: room.id });
+  emitToRoom(room, 'round_start', { round: 1, phase: 'deploy' });
+}
+
 io.on('connection', (socket) => {
   console.log(`Player connected: ${socket.id}`);
 
@@ -42,29 +70,42 @@ io.on('connection', (socket) => {
 
     if (match) {
       const { room, player1, player2 } = match;
-      const s1 = getPlayerSocket(player1);
-      const s2 = getPlayerSocket(player2);
-      if (s1) s1.join(room.id);
-      if (s2) s2.join(room.id);
-
-      // Send game start
-      for (const pid of room.playerIds) {
-        emitToPlayer(pid, 'game_start', {
-          roomId: room.id,
-          yourHand: room.players[pid].hand.map(c => ({
-            id: c.id, type: c.type, category: c.category,
-            name: c.name, hp: c.hp, atk: c.atk,
-            skill: c.skill, skillCard: c.skillCard,
-          })),
-          opponentHandCount: room.getOpponent(pid).hand.length,
-        });
-      }
-
-      room.round = 1;
-      room.phase = 'deploy';
-      emitToRoom(room, 'round_start', { round: 1, phase: 'deploy' });
+      startGame(room, player1, player2);
     } else {
       socket.emit('queue_joined', { message: 'Waiting for opponent...' });
+    }
+  });
+
+  // === CREATE ROOM ===
+  socket.on('create_room', () => {
+    console.log(`${socket.id} creating room`);
+    const result = matchmaker.createRoom(socket.id);
+
+    if (result) {
+      socket.emit('room_created', { roomCode: result.roomCode });
+    } else {
+      socket.emit('error_msg', { message: '无法创建房间，你可能已在其他房间中' });
+    }
+  });
+
+  // === JOIN ROOM ===
+  socket.on('join_room', ({ roomCode }) => {
+    console.log(`${socket.id} joining room ${roomCode}`);
+    const match = matchmaker.joinRoom(socket.id, roomCode);
+
+    if (match) {
+      const { room, player1, player2 } = match;
+      startGame(room, player1, player2);
+    } else {
+      socket.emit('error_msg', { message: '房间不存在或已满' });
+    }
+  });
+
+  // === CANCEL ROOM ===
+  socket.on('cancel_room', () => {
+    const code = matchmaker.cancelRoom(socket.id);
+    if (code) {
+      socket.emit('room_cancelled', {});
     }
   });
 

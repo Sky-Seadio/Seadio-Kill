@@ -12,7 +12,16 @@ class UIRenderer {
 
     this.elements = {
       joinBtn: document.getElementById('btn-join-queue'),
+      createRoomBtn: document.getElementById('btn-create-room'),
+      showJoinBtn: document.getElementById('btn-show-join'),
       queueStatus: document.getElementById('queue-status'),
+      roomCreated: document.getElementById('room-created'),
+      roomCode: document.getElementById('room-code'),
+      cancelRoomBtn: document.getElementById('btn-cancel-room'),
+      roomJoin: document.getElementById('room-join'),
+      roomInput: document.getElementById('input-room-code'),
+      joinRoomBtn: document.getElementById('btn-join-room'),
+      cancelJoinBtn: document.getElementById('btn-cancel-join'),
       handCards: document.getElementById('hand-cards'),
       playerFieldCard: document.getElementById('player-field-card'),
       opponentFieldCard: document.getElementById('opponent-field-card'),
@@ -45,6 +54,38 @@ class UIRenderer {
   showQueueStatus(show) {
     this.elements.queueStatus.classList.toggle('hidden', !show);
     this.elements.joinBtn.classList.toggle('hidden', show);
+    this.elements.createRoomBtn.classList.toggle('hidden', show);
+    this.elements.showJoinBtn.classList.toggle('hidden', show);
+  }
+
+  showRoomCode(code) {
+    this.elements.roomCode.textContent = code;
+    this.elements.roomCreated.classList.remove('hidden');
+    this.elements.roomJoin.classList.add('hidden');
+    this.elements.joinBtn.classList.add('hidden');
+    this.elements.createRoomBtn.classList.add('hidden');
+    this.elements.showJoinBtn.classList.add('hidden');
+    this.elements.queueStatus.classList.add('hidden');
+  }
+
+  showJoinRoomInput() {
+    this.elements.roomJoin.classList.remove('hidden');
+    this.elements.roomCreated.classList.add('hidden');
+    this.elements.joinBtn.classList.add('hidden');
+    this.elements.createRoomBtn.classList.add('hidden');
+    this.elements.showJoinBtn.classList.add('hidden');
+    this.elements.queueStatus.classList.add('hidden');
+    this.elements.roomInput.value = '';
+    this.elements.roomInput.focus();
+  }
+
+  hideRoomInfo() {
+    this.elements.roomCreated.classList.add('hidden');
+    this.elements.roomJoin.classList.add('hidden');
+    this.elements.joinBtn.classList.remove('hidden');
+    this.elements.createRoomBtn.classList.remove('hidden');
+    this.elements.showJoinBtn.classList.remove('hidden');
+    this.elements.queueStatus.classList.add('hidden');
   }
 
   // === HAND CARDS ===

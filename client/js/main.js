@@ -11,8 +11,54 @@
     ui.showQueueStatus(true);
   });
 
+  // Create room
+  ui.elements.createRoomBtn.addEventListener('click', () => {
+    socketManager.createRoom();
+  });
+
+  // Show join room input
+  ui.elements.showJoinBtn.addEventListener('click', () => {
+    ui.showJoinRoomInput();
+  });
+
+  // Join room
+  ui.elements.joinRoomBtn.addEventListener('click', () => {
+    const code = ui.elements.roomInput.value.trim();
+    if (code.length === 6) {
+      socketManager.joinRoom(code);
+    } else {
+      ui.addLog('请输入6位房间号');
+    }
+  });
+
+  // Cancel room
+  ui.elements.cancelRoomBtn.addEventListener('click', () => {
+    socketManager.cancelRoom();
+    ui.hideRoomInfo();
+  });
+
+  // Cancel join
+  ui.elements.cancelJoinBtn.addEventListener('click', () => {
+    ui.hideRoomInfo();
+  });
+
   socketManager.on('queue_joined', () => {
     ui.showQueueStatus(true);
+  });
+
+  // Room created
+  socketManager.on('room_created', (data) => {
+    ui.showRoomCode(data.roomCode);
+  });
+
+  // Room cancelled
+  socketManager.on('room_cancelled', () => {
+    ui.hideRoomInfo();
+  });
+
+  // Room joined (game starting)
+  socketManager.on('room_joined', () => {
+    ui.hideRoomInfo();
   });
 
   // === GAME START ===
