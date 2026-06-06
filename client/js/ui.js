@@ -35,6 +35,9 @@ class UIRenderer {
       gameoverTitle: document.getElementById('gameover-title'),
       gameoverReason: document.getElementById('gameover-reason'),
       playAgainBtn: document.getElementById('btn-play-again'),
+      deckModal: document.getElementById('deck-modal'),
+      deckList: document.getElementById('deck-list'),
+      closeDeckBtn: document.getElementById('btn-close-deck'),
     };
   }
 
@@ -242,6 +245,50 @@ class UIRenderer {
       opponent_disconnected: '对手断开连接',
     };
     this.elements.gameoverReason.textContent = reasonTexts[reason] || reason;
+  }
+
+  // === DECK MODAL ===
+  showDeckModal(deck) {
+    this.elements.deckList.innerHTML = '';
+
+    // Group by type and count
+    const grouped = {};
+    deck.forEach(card => {
+      if (!grouped[card.type]) {
+        grouped[card.type] = { ...card, count: 0 };
+      }
+      grouped[card.type].count++;
+    });
+
+    Object.values(grouped).forEach(card => {
+      const stats = CHARACTER_STATS[card.type];
+      const el = document.createElement('div');
+      el.className = `deck-item ${card.category}`;
+
+      let skillText = '';
+      if (SKILL_DESC[card.type === 'hunter' ? 'martyrdom' : card.type === 'witch' ? 'revive_self' : card.type === 'seer' ? 'dodge' : '']) {
+        const skillKey = card.type === 'hunter' ? 'martyrdom' : card.type === 'witch' ? 'revive_self' : card.type === 'seer' ? 'dodge' : '';
+        if (SKILL_DESC[skillKey]) skillText = SKILL_DESC[skillKey].name;
+      }
+      if (card.category === 'dual' && SKILL_EFFECTS[card.type === 'guardian' ? 'shield' : card.type === 'witch' ? 'revive_ally' : card.type === 'seer' ? 'reveal' : '']) {
+        const skillCardKey = card.type === 'guardian' ? 'shield' : card.type === 'witch' ? 'revive_ally' : card.type === 'seer' ? 'reveal' : '';
+        if (SKILL_EFFECTS[skillCardKey]) skillText += (skillText ? ' / ' : '') + SKILL_EFFECTS[skillCardKey].name;
+      }
+
+      el.innerHTML = `
+        <span class="deck-count">×${card.count}</span>
+        <span class="deck-name">${card.name}</span>
+        <span class="deck-stats">♥${stats.hp} ⚔${stats.atk}</span>
+        ${skillText ? `<span class="deck-skill">${skillText}</span>` : ''}
+      `;
+      this.elements.deckList.appendChild(el);
+    });
+
+    this.elements.deckModal.classList.remove('hidden');
+  }
+
+  hideDeckModal() {
+    this.elements.deckModal.classList.add('hidden');
   }
 
   // === HIDE ALL INTERACTIVE SECTIONS ===

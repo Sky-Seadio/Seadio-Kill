@@ -61,6 +61,11 @@
     ui.hideRoomInfo();
   });
 
+  // Close deck modal
+  ui.elements.closeDeckBtn.addEventListener('click', () => {
+    ui.hideDeckModal();
+  });
+
   // === GAME START ===
   socketManager.on('game_start', (data) => {
     gameState.setGameStart(data);
@@ -72,6 +77,11 @@
     ui.renderOpponentField(null);
     ui.updateOpponentHandCount(data.opponentHandCount);
     ui.hideAllSections();
+
+    // Show deck composition
+    if (data.deck) {
+      ui.showDeckModal(data.deck);
+    }
   });
 
   // === ROUND START ===

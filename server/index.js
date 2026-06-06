@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const { Matchmaker, GameRoom } = require('./room');
+const { DECK } = require('./data');
 const logic = require('./logic');
 
 const app = express();
@@ -51,6 +52,7 @@ function startGame(room, player1, player2) {
         skill: c.skill, skillCard: c.skillCard,
       })),
       opponentHandCount: room.getOpponent(pid).hand.length,
+      deck: DECK.map(c => ({ type: c.type, name: c.name, category: c.category })),
     });
   }
 

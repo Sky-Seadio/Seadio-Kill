@@ -518,3 +518,91 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
+
+/* === DECK MODAL === */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #1a1a3e, #16213e);
+  border: 2px solid #e94560;
+  border-radius: 16px;
+  padding: 25px 30px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: center;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  color: #e94560;
+  margin-bottom: 5px;
+}
+
+.modal-subtitle {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 15px;
+}
+
+.deck-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.deck-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  border: 1px solid #444;
+}
+
+.deck-item.character {
+  background: rgba(26, 58, 92, 0.5);
+  border-color: #1b4965;
+}
+
+.deck-item.dual {
+  background: rgba(58, 28, 92, 0.5);
+  border-color: #6b3fa0;
+}
+
+.deck-item .deck-count {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  color: #f5a623;
+  font-size: 0.8rem;
+}
+
+.deck-item .deck-name {
+  font-weight: bold;
+}
+
+.deck-item .deck-stats {
+  color: #aaa;
+  font-size: 0.75rem;
+}
+
+.deck-item .deck-skill {
+  color: #a78bfa;
+  font-size: 0.7rem;
+}
