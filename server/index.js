@@ -354,9 +354,15 @@ io.on('connection', (socket) => {
   });
 
   // === WITCH POISON (special action) ===
-  socket.on('witch_poison', ({ targetId }) => {
+  socket.on('witch_poison', () => {
     const room = matchmaker.getRoom(socket.id);
     if (!room || room.phase !== 'action') return;
+
+    // Must be your turn
+    if (room.currentRound.rpsWinner !== socket.id) {
+      socket.emit('error_msg', { message: '不是你的回合' });
+      return;
+    }
 
     const player = room.getPlayer(socket.id);
     const opponent = room.getOpponent(socket.id);

@@ -72,7 +72,7 @@
     ui.showScreen('game');
     ui.clearLog();
     ui.addLog('游戏开始！从牌库中各抽 6 张牌。', true);
-    ui.renderHand(gameState.myHand, onHandCardClick);
+    ui.renderHand(gameState.myHand, onDeployCardClick);
     ui.renderMyField(null);
     ui.renderOpponentField(null);
     ui.updateOpponentHandCount(data.opponentHandCount);
@@ -161,7 +161,6 @@
     ui.renderHand(gameState.myHand, onDeployCardClick);
     ui.addLog(`你暗置了一张牌。`);
     ui.hideDeploySkip();
-    ui.hideDeploySkip();
     ui.clearCardSelection();
   });
 
@@ -169,7 +168,7 @@
   socketManager.on('cards_revealed', (data) => {
     gameState.phase = 'reveal';
 
-    // Show opponent's deployed card
+    // Show opponent's deployed card (null if skipped)
     if (data.opponentCard) {
       ui.addLog(`对手暗置了：${data.opponentCard.name}`);
 
@@ -184,6 +183,8 @@
         };
         ui.renderOpponentField(gameState.opponentField);
       }
+    } else {
+      ui.addLog('对手跳过了部署。');
     }
   });
 
@@ -309,7 +310,7 @@
         socketManager.performAction('skill', card.id);
         ui.addLog(`你使用了 ${card.name} 的技能！`);
         ui.showActions(false);
-        ui.renderHand(gameState.myHand, onHandCardClick);
+        ui.renderHand(gameState.myHand, onDeployCardClick);
       });
       ui.elements.handCards.appendChild(el);
     });
@@ -332,7 +333,7 @@
         socketManager.performAction('swap', card.id);
         ui.addLog(`你将场上角色替换为 ${card.name}。`);
         ui.showActions(false);
-        ui.renderHand(gameState.myHand, onHandCardClick);
+        ui.renderHand(gameState.myHand, onDeployCardClick);
       });
       ui.elements.handCards.appendChild(el);
     });
@@ -348,10 +349,36 @@
 
       if (result.damage > 0) {
         ui.addLog(`造成 ${result.damage} 点伤害！`);
+
+        // Update HP values on both sides
+        if (isAttacker) {
+          // I attacked, opponent took damage
+          if (gameState.opponentField) {
+            gameState.opponentField.currentHp = Math.max(0, gameState.opponentField.currentHp - result.damage);
+          }
+        } else {
+          // Opponent attacked, I took damage
+          if (gameState.myField) {
+            gameState.myField.currentHp = Math.max(0, gameState.myField.currentHp - result.damage);
+          }
+        }
       }
 
       result.effects.forEach(effect => {
         ui.addLog(effect.message, effect.type === 'death');
+
+        // Clear dead character from display
+        if (effect.type === 'death') {
+          if (isAttacker) {
+            // Opponent's character died
+            gameState.opponentField = null;
+            ui.renderOpponentField(null);
+          } else {
+            // My character died
+            gameState.myField = null;
+            ui.renderMyField(null);
+          }
+        }
       });
 
       // Update field displays
@@ -372,16 +399,21 @@
       const isMe = data.playerId === socketManager.socket.id;
       ui.addLog(`${isMe ? '你' : '对手'} 换上了 ${data.newCharacter.name}！`);
 
+      const stats = CHARACTER_STATS[data.newCharacter.type];
+      const fieldData = {
+        type: data.newCharacter.type,
+        name: data.newCharacter.name,
+        maxHp: data.newCharacter.maxHp || stats.hp,
+        currentHp: data.newCharacter.hp || stats.hp,
+        atk: data.newCharacter.atk || stats.atk,
+      };
+
       if (isMe) {
-        const stats = CHARACTER_STATS[data.newCharacter.type];
-        gameState.myField = {
-          type: data.newCharacter.type,
-          name: data.newCharacter.name,
-          maxHp: data.newCharacter.maxHp || stats.hp,
-          currentHp: data.newCharacter.hp || stats.hp,
-          atk: data.newCharacter.atk || stats.atk,
-        };
+        gameState.myField = fieldData;
         ui.renderMyField(gameState.myField);
+      } else {
+        gameState.opponentField = fieldData;
+        ui.renderOpponentField(gameState.opponentField);
       }
     } else if (data.type === 'witch_poison') {
       ui.addLog(data.result.message || '毒药发动！', true);
@@ -390,13 +422,48 @@
 
     // Restore hand display after action
     setTimeout(() => {
-      ui.renderHand(gameState.myHand, onHandCardClick);
+      ui.renderHand(gameState.myHand, onDeployCardClick);
     }, 500);
   });
 
   // === DEATH SKILLS ===
   socketManager.on('death_skill', (data) => {
     ui.addLog(data.message, true);
+
+    const isMyCharDied = data.playerId === socketManager.socket.id;
+
+    // Hunter martyrdom: the dying player's skill hits the OTHER player
+    if (data.skill === 'martyrdom' && data.damage) {
+      if (isMyCharDied) {
+        // My hunter died → damage hit opponent's character
+        if (gameState.opponentField) {
+          gameState.opponentField.currentHp = data.targetHp;
+          if (data.targetHp <= 0) {
+            gameState.opponentField = null;
+            ui.renderOpponentField(null);
+          }
+        }
+      } else {
+        // Opponent's hunter died → damage hit my character
+        if (gameState.myField) {
+          gameState.myField.currentHp = data.targetHp;
+          if (data.targetHp <= 0) {
+            gameState.myField = null;
+            ui.renderMyField(null);
+          }
+        }
+      }
+    }
+
+    // Witch self-revive
+    if (data.skill === 'revive_self' && data.hp) {
+      if (isMyCharDied) {
+        if (gameState.myField) gameState.myField.currentHp = data.hp;
+      } else {
+        if (gameState.opponentField) gameState.opponentField.currentHp = data.hp;
+      }
+    }
+
     updateFieldDisplays();
   });
 
@@ -422,10 +489,15 @@
 
   // === HELPERS ===
   function updateFieldDisplays() {
-    // This is a simplified version — in a full implementation,
-    // the server would send updated state after each action
     if (gameState.myField) {
       ui.renderMyField(gameState.myField);
+    } else {
+      ui.renderMyField(null);
+    }
+    if (gameState.opponentField) {
+      ui.renderOpponentField(gameState.opponentField);
+    } else {
+      ui.renderOpponentField(null);
     }
   }
 
