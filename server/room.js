@@ -61,22 +61,28 @@ class GameRoom {
 
     const card = player.hand[cardIndex];
 
-    // If player already has a living field character and this is a character card,
-    // it's a swap (only allowed when winning RPS)
-    if (player.field && player.field.currentHp > 0 && (card.category === 'character' || card.category === 'dual')) {
-      return { success: false, error: 'Field character still alive, use swap action' };
+    // If player already has a living field character and deploys a character card, block it
+    // Dual cards can be deployed as skill cards (consumed, no field change)
+    if (player.field && player.field.currentHp > 0 && card.category === 'character') {
+      return { success: false, error: '场上角色存活，请用行动阶段换角色' };
     }
 
     // If no field character, must deploy a character or dual card
     if (!player.field && card.category !== 'character' && card.category !== 'dual') {
-      return { success: false, error: 'Must deploy a character card first' };
+      return { success: false, error: '必须先部署一张角色牌' };
+    }
+
+    // Pure skill cards cannot be deployed, only used during action phase
+    if (card.category === 'skill') {
+      return { success: false, error: '纯技能牌只能在行动阶段使用' };
     }
 
     player.hand.splice(cardIndex, 1);
     this.currentRound.deployments[playerId] = card;
 
-    // Create field character immediately for character/dual cards
-    if (card.category === 'character' || card.category === 'dual') {
+    // Create field character only if no existing field character
+    // (dual cards deployed when field is alive are used as skill cards, consumed)
+    if (!player.field && (card.category === 'character' || card.category === 'dual')) {
       const stats = CHARACTER_STATS[card.type];
       player.field = {
         id: card.id,

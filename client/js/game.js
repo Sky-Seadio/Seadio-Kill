@@ -17,6 +17,7 @@ class GameState {
     this.isMyTurn = false;
     this.round = 0;
     this.revealedCard = null;   // card I deployed this round (for display)
+    this.deploying = false;     // prevent double deploy
   }
 
   setGameStart(data) {

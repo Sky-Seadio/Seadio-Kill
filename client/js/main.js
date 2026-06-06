@@ -111,14 +111,20 @@
     }
   });
 
-  // === DEPLOY (when field character is alive) ===
+  // === DEPLOY ===
   function onDeployCardClick(card) {
     if (gameState.phase !== 'deploy') return;
 
+    // Pure skill cards cannot be deployed, only used in action phase
+    if (card.category === 'skill') {
+      ui.addLog('纯技能牌只能在行动阶段使用，不能部署。');
+      return;
+    }
+
     if (gameState.myField && gameState.myField.currentHp > 0) {
-      // Field alive: only allow skill cards
-      if (!card.skillCard) {
-        ui.addLog('场上角色存活，只能出技能牌或跳过。');
+      // Field alive: only allow dual cards used as skill
+      if (card.category !== 'dual') {
+        ui.addLog('场上角色存活，只能出双用牌或跳过。');
         return;
       }
     } else {
@@ -128,6 +134,10 @@
         return;
       }
     }
+
+    // Prevent double deploy
+    if (gameState.deploying) return;
+    gameState.deploying = true;
 
     ui.selectCard(card.id);
     gameState.revealedCard = card;
@@ -144,6 +154,8 @@
   });
 
   socketManager.on('deploy_success', (data) => {
+    gameState.deploying = false;
+
     // Handle skip (cardId is null)
     if (!data.cardId) {
       ui.hideDeploySkip();
@@ -485,6 +497,7 @@
   // === ERRORS ===
   socketManager.on('error_msg', (data) => {
     ui.addLog(`⚠️ ${data.message}`);
+    gameState.deploying = false;
   });
 
   // === HELPERS ===

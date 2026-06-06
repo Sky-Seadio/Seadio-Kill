@@ -5,7 +5,7 @@ const CHARACTER_STATS = {
   hunter:   { name: '猎人', hp: 3, atk: 1.5 },
   guardian:  { name: '守卫', hp: 2, atk: 1 },
   witch:    { name: '女巫', hp: 2, atk: 1 },
-  seer:     { name: '预言家', hp: 2, atk: 1 },
+  // seer is a pure skill card, no field character
 };
 
 const SKILL_EFFECTS = {
@@ -18,5 +18,11 @@ const SKILL_DESC = {
   martyrdom:   { name: '殉职', desc: '死亡时对对方场上角色造成10点伤害' },
   revive_self: { name: '复活', desc: '死亡时满血复活一次' },
   poison:      { name: '毒药', desc: '直接击杀对方场上一个角色（无视守卫盾）' },
-  dodge:       { name: '躲避', desc: '可躲避一次攻击（含毒药）' },
+};
+
+// Card category labels
+const CATEGORY_LABELS = {
+  character: '角色',
+  dual: '双用',
+  skill: '技能',
 };

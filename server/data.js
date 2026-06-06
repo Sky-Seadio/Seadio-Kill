@@ -24,9 +24,9 @@ const DECK = [
   { id: 'witch_1', type: 'witch', category: 'dual', name: '女巫', hp: 2, atk: 1, skill: 'revive_self', skillCard: 'revive_ally' },
   { id: 'witch_2', type: 'witch', category: 'dual', name: '女巫', hp: 2, atk: 1, skill: 'revive_self', skillCard: 'revive_ally' },
 
-  // 预言家 ×2
-  { id: 'seer_1', type: 'seer', category: 'dual', name: '预言家', hp: 2, atk: 1, skill: 'dodge', skillCard: 'reveal' },
-  { id: 'seer_2', type: 'seer', category: 'dual', name: '预言家', hp: 2, atk: 1, skill: 'dodge', skillCard: 'reveal' },
+  // 预言家 ×2（纯技能牌）
+  { id: 'seer_1', type: 'seer', category: 'skill', name: '预言家', hp: null, atk: null, skill: null, skillCard: 'reveal' },
+  { id: 'seer_2', type: 'seer', category: 'skill', name: '预言家', hp: null, atk: null, skill: null, skillCard: 'reveal' },
 ];
 
 // Character type lookup (for creating instances)
@@ -36,7 +36,7 @@ const CHARACTER_STATS = {
   hunter:   { name: '猎人', hp: 3, atk: 1.5, skill: 'martyrdom' },
   guardian:  { name: '守卫', hp: 2, atk: 1, skill: null },
   witch:    { name: '女巫', hp: 2, atk: 1, skill: 'revive_self' },
-  seer:     { name: '预言家', hp: 2, atk: 1, skill: 'dodge' },
+  // seer is a pure skill card, no field character
 };
 
 // Skill card effect descriptions
@@ -50,7 +50,6 @@ const SKILL_EFFECTS = {
 const SKILL_DESC = {
   martyrdom:   { name: '殉职', desc: '死亡时对对方场上角色造成10点伤害' },
   revive_self: { name: '复活', desc: '死亡时满血复活一次' },
-  dodge:       { name: '躲避', desc: '可躲避一次攻击（含毒药）' },
   poison:      { name: '毒药', desc: '直接击杀对方场上一个角色（无视守卫盾）' },
 };
 
